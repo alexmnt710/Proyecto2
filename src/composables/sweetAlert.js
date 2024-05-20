@@ -55,6 +55,18 @@ export function sweetalert() {
             confirmButtonText: 'OK'
         });
     };
+    const inputAlert = async (title, text, inputType) => {
+        return Swal.fire({
+            title: title,
+            text: text,
+            input: inputType,
+            showCancelButton: true,
+            confirmButtonText: 'OK',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            return result.value;
+        });
+    };
 
-    return { alert, successAlert, errorAlert, confirmAlert, ShowLoading, showAlert};
+    return { alert, successAlert, errorAlert, confirmAlert, ShowLoading, showAlert, inputAlert};
 }

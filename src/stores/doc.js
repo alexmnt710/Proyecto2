@@ -7,7 +7,6 @@ export const Doc = defineStore('docStore',{
     ),
     actions:{
         async addDoc(doc){
-            console.log(doc)
             this.documentos.push(doc)
             return true;
         },

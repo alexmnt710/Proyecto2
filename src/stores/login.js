@@ -31,5 +31,13 @@ export const User = defineStore('userStore',{
             this.sessionAdmin = false
             return true
         },
+        async findEmail(user) {
+            const userEncontrado = this.admin.find(a => a.email === user || a.nombre === user);
+            return userEncontrado ? [true, userEncontrado] : [false];
+        },
+        async updatePassword(pass) {
+            this.user[0].password = pass
+            return true
+        }
     },
 })

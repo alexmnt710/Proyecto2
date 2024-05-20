@@ -37,6 +37,33 @@ const login = async () => {
         }
     }
 };
+const recuperarContraseña = async () => {
+  try {
+    swal.inputAlert('Recuperar contraseña', 'Ingrese su correo electrónico', 'email').then(async (result) => {
+      if (result) {
+        let user =await userStore.findEmail(result);
+        if (user) {
+        swal.inputAlert('Correo Encontrado', 'Ingrese su nueva contraseña', 'password').then((result) => {
+          if (result) {
+            userStore.updatePassword(result);
+            swal.successAlert('Contraseña actualizada', 'Su contraseña ha sido actualizada correctamente');
+          }else{
+            throw new Error('Cancelado');
+          }
+        });
+      }else{
+        swal.errorAlert('Error', 'Correo electrónico no encontrado');
+      }
+      }else{
+        throw new Error('Cancelado');
+      }
+    });
+  } catch (error) {
+    if (error.message !== 'Cancelado') {
+      console.error('Error inesperado:', error);
+    }
+  }
+};
 
 </script>
 
@@ -54,6 +81,9 @@ const login = async () => {
             <label for="password" class="form-label">Contraseña</label>
             <input type="password" class="form-control" v-model="password" id="password">
           </div>
+          <div class="text-right mt-3">
+              <a href="/forgot-password" class="text-decoration-none" @click.submit.prevent="recuperarContraseña">¿Olvidaste tu contraseña?</a>
+            </div>
           <div class="d-flex justify-content-center mt-3">
             <button type="submit" class="btn btn-primary boton">Iniciar sesión</button>
           </div>
