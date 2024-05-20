@@ -5,26 +5,31 @@ import {User} from '../../stores/login';
 import {Doc} from '../../stores/doc';
 import Header from '../header.vue';
 import { onMounted } from 'vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const swal = sweetalert();
 const router = useRouter()
 const docStore = Doc();
 
 const Docus = ref([]);
+const get_document = () => {
+    const documentKeys = Object.keys(localStorage).filter(key => key.startsWith('uploadedFile'));
+    return documentKeys.map(key => localStorage.getItem(key));
+};
 
 const showCreateForm = ref(false);
 const showDocumentList = ref(false);
 
 const showCreate = () => {
     showCreateForm.value = true;
-    showDocumentList.value = false; // Oculta la lista de documentos cuando se muestra el formulario de creación
+    showDocumentList.value = false;
+     // Oculta la lista de documentos cuando se muestra el formulario de creación
 };
 
 const showDocuments = () => {
     showDocumentList.value = true;
     showCreateForm.value = false; // Oculta el formulario de creación cuando se muestra la lista de documentos
-    Docus.value = docStore.documentos;
+    Docus.value = get_document();
 };
 
 //aqui empieza la logica de documentos
@@ -77,7 +82,8 @@ const saveFileLocally = () => {
     const reader = new FileReader();
     
     reader.onload = (e) => {
-        localStorage.setItem('uploadedFile', e.target.result);
+        const uniqueKey = `uploadedFile_${Date.now()}`;
+        localStorage.setItem(uniqueKey, e.target.result);
         alert('File saved locally');
         fileSaved.value = true;  // Indica que el archivo se guardó
     };
@@ -88,14 +94,28 @@ const saveFileLocally = () => {
     };
 
     reader.readAsDataURL(selectedFile.value);
-    console.log(reader);  // Este log solo muestra el estado inicial del FileReader
 };
-
 const clearForm = () => {
     documento.value.nombre = '';
     documento.value.archivo = '';
     documento.value.descripcion = '';
 };
+const isPDF = (document) => {
+    return document.startsWith('data:application/pdf');
+};
+
+// Función para verificar si el documento es una imagen (puedes ajustarla según los tipos de imagen que manejas)
+const isImage = (document) => {
+    return document.startsWith('data:image/');
+};
+
+const downloadDocument = (doc) => {
+    const link = document.createElement('a');
+    link.href = doc;
+    link.download = 'document.pdf';  // Puedes cambiar el nombre del archivo descargado
+    link.click();
+};
+
 
 </script>
 <template>
@@ -137,17 +157,41 @@ const clearForm = () => {
             </div>
             <div class="row mt-3" v-if="showDocumentList">
                 <div class="col">
-                    <div class="d-flex justify-content-center">
-                        <ul class="list-group">
-                            <li class="list-group-item" v-for="documento in Docus" :key="documento.id">
-                                {{ documento.nombre }}
-                            </li>
-                            <li class="list-group-item aviso" v-if="docStore.documentos.length == 0">
-                                <h3 class="text-center">¡Cree un documento primero!</h3>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="d-flex justify-content-center">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(doc, index) in Docus" :key="index">
+                        <td>{{ index + 1 }}</td>
+                        <td>
+                            <span v-if="isPDF(doc)">
+                                <i class="bi bi-file-pdf"></i> PDF
+                            </span>
+                            <span v-else-if="isImage(doc)">
+                                <i class="bi bi-file-image"></i> Imagen
+                            </span>
+                            <!-- Agrega más condiciones para otros tipos de documentos si es necesario -->
+                            <span v-else>
+                                <i class="bi bi-file"></i> Otro
+                            </span>
+                        </td>
+                        <td>
+                            <button @click="downloadDocument(doc)" class="btn btn-primary">Descargar</button>
+                        </td>
+                    </tr>
+                    <tr v-if="Docus.length === 0">
+                        <td colspan="3" class="text-center">¡No hay documentos disponibles!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
             </div>
         </div>
     </div>
