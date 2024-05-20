@@ -17,7 +17,7 @@ const get_document = () => {
     return documentKeys.map(key => localStorage.getItem(key));
 };
 
-const showCreateForm = ref(false);
+const showCreateForm = ref(true);
 const showDocumentList = ref(false);
 
 const showCreate = () => {
@@ -39,28 +39,7 @@ const documento = ref({
     archivo: '',
     descripcion: ''
 });
-// const submitForm = async () => {
-//     console.log(documento.value);
-//     if (!documento.value.nombre || !documento.value.archivo || !documento.value.descripcion) {
-//         swal.errorAlert('Error de credenciales', 'Por favor, complete los campos')
-//         return;
-//     }else{
-//         try {
-//             documento.value.id = docStore.documentos.length + 1;
-//             const response = await docStore.addDoc(documento.value);
-//             if (response == true ) {
-//                 swal.successAlert('Documento creado', 'El documento se ha creado correctamente');
-//                 console.log(docStore.documentos);
-//                 clearForm();
-//             }else {
-//                 swal.errorAlert('Error al crear documento', 'Por favor, intente nuevamente')
-//                 console.log(response);
-//             }
-//         } catch (error) {
-            
-//         }
-//     }
-// };
+
 const fileSaved = ref(false);
 const selectedFile = ref(null);
 const previewUrl = ref('');
@@ -75,7 +54,7 @@ const handleFileChange = (event) => {
 
 const saveFileLocally = () => {
     if (!selectedFile.value) {
-        alert('No file selected');
+        swal.errorAlert('Error','Por favor Seleccione un archivo');
         return;
     }
 
@@ -84,12 +63,13 @@ const saveFileLocally = () => {
     reader.onload = (e) => {
         const uniqueKey = `uploadedFile_${Date.now()}`;
         localStorage.setItem(uniqueKey, e.target.result);
-        alert('File saved locally');
+        swal.successAlert('Exito','Documento Guardado');
         fileSaved.value = true;  // Indica que el archivo se guardó
+        clearForm();
     };
 
     reader.onerror = (e) => {
-        alert('Error reading file');
+        swal.errorAlert('Error','Error al guardar el archivo');
         fileSaved.value = false;  // Indica que hubo un error al guardar
     };
 
@@ -114,6 +94,7 @@ const downloadDocument = (doc) => {
     link.href = doc;
     link.download = 'document.pdf';  // Puedes cambiar el nombre del archivo descargado
     link.click();
+    swal.successAlert('Exito','Documento Descargado');
 };
 
 
@@ -131,8 +112,6 @@ const downloadDocument = (doc) => {
                     </div>
                 </div>
             </div>
-            <div v-if="fileSaved" class="alert alert-success mt-4">File has been saved locally!</div>
-            <!-- Formulario de creación de documentos -->
             <div class="row mt-3" v-if="showCreateForm">
                 <div class="col">
                     <div class="d-flex justify-content-center">
@@ -157,41 +136,46 @@ const downloadDocument = (doc) => {
             </div>
             <div class="row mt-3" v-if="showDocumentList">
                 <div class="col">
-        <div class="d-flex justify-content-center">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Documento</th>
-                        <th scope="col">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(doc, index) in Docus" :key="index">
-                        <td>{{ index + 1 }}</td>
-                        <td>
-                            <span v-if="isPDF(doc)">
-                                <i class="bi bi-file-pdf"></i> PDF
-                            </span>
-                            <span v-else-if="isImage(doc)">
-                                <i class="bi bi-file-image"></i> Imagen
-                            </span>
-                            <!-- Agrega más condiciones para otros tipos de documentos si es necesario -->
-                            <span v-else>
-                                <i class="bi bi-file"></i> Otro
-                            </span>
-                        </td>
-                        <td>
-                            <button @click="downloadDocument(doc)" class="btn btn-primary">Descargar</button>
-                        </td>
-                    </tr>
-                    <tr v-if="Docus.length === 0">
-                        <td colspan="3" class="text-center">¡No hay documentos disponibles!</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    <div class="d-flex justify-content-center">
+                        <table class="table-hover table-bordered">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-center p-2">#</th>
+                                    <th scope="col" class="text-center p-2">Documento</th>
+                                    <th scope="col" class="text-center p-2 ">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(doc, index) in Docus" :key="index">
+                                    <td class="text-center  p-2">{{ index + 1 }}</td>
+                                    <td class="text-center  p-2">
+                                        <span v-if="isPDF(doc)">
+                                            <i class="bi bi-file-pdf text-danger"></i> PDF
+                                        </span>
+                                        <span v-else-if="isImage(doc)">
+                                            <i class="bi bi-file-image text-success"></i> Imagen
+                                        </span>
+                                        <span v-else>
+                                            <i class="bi bi-file text-secondary"></i> Otro
+                                        </span>
+                                    </td>
+                                    <td class="text-center  p-2">
+                                        <button @click="downloadDocument(doc)" class="btn btn-primary btn-sm me-2">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <button @click="deleteDoc(doc)" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="Docus.length === 0">
+                                    <td colspan="3" class="text-center">¡No hay documentos disponibles!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                                       
+                </div>
             </div>
         </div>
     </div>
@@ -220,4 +204,24 @@ const downloadDocument = (doc) => {
     background: #8c5d9d !important;
     color:white
   }
+  
+  .bi-file-pdf {
+    color: red;
+    }
+
+    .bi-file-image {
+        color: green;
+    }
+
+    .bi-file {
+        color: gray;
+    }
+  .table-hover {
+    width: 50%;
+    border-radius: 5px;
+    max-width: 80%;
+    margin-top: 20px;
+    color: white !important;
+    background:#8c5d9d !important;
+}
 </style>
