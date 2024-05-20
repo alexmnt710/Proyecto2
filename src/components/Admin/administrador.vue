@@ -34,27 +34,61 @@ const documento = ref({
     archivo: '',
     descripcion: ''
 });
-const submitForm = async () => {
-    console.log(documento.value);
-    if (!documento.value.nombre || !documento.value.archivo || !documento.value.descripcion) {
-        swal.errorAlert('Error de credenciales', 'Por favor, complete los campos')
-        return;
-    }else{
-        try {
-            documento.value.id = docStore.documentos.length + 1;
-            const response = await docStore.addDoc(documento.value);
-            if (response == true ) {
-                swal.successAlert('Documento creado', 'El documento se ha creado correctamente');
-                console.log(docStore.documentos);
-                clearForm();
-            }else {
-                swal.errorAlert('Error al crear documento', 'Por favor, intente nuevamente')
-                console.log(response);
-            }
-        } catch (error) {
+// const submitForm = async () => {
+//     console.log(documento.value);
+//     if (!documento.value.nombre || !documento.value.archivo || !documento.value.descripcion) {
+//         swal.errorAlert('Error de credenciales', 'Por favor, complete los campos')
+//         return;
+//     }else{
+//         try {
+//             documento.value.id = docStore.documentos.length + 1;
+//             const response = await docStore.addDoc(documento.value);
+//             if (response == true ) {
+//                 swal.successAlert('Documento creado', 'El documento se ha creado correctamente');
+//                 console.log(docStore.documentos);
+//                 clearForm();
+//             }else {
+//                 swal.errorAlert('Error al crear documento', 'Por favor, intente nuevamente')
+//                 console.log(response);
+//             }
+//         } catch (error) {
             
-        }
+//         }
+//     }
+// };
+const fileSaved = ref(false);
+const selectedFile = ref(null);
+const previewUrl = ref('');
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    console.log(file);
+    if (file) {
+        selectedFile.value = file;
+        previewUrl.value = URL.createObjectURL(file);
     }
+};
+
+const saveFileLocally = () => {
+    if (!selectedFile.value) {
+        alert('No file selected');
+        return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        localStorage.setItem('uploadedFile', e.target.result);
+        alert('File saved locally');
+        fileSaved.value = true;  // Indica que el archivo se guardó
+    };
+
+    reader.onerror = (e) => {
+        alert('Error reading file');
+        fileSaved.value = false;  // Indica que hubo un error al guardar
+    };
+
+    reader.readAsDataURL(selectedFile.value);
+    console.log(reader);  // Este log solo muestra el estado inicial del FileReader
 };
 
 const clearForm = () => {
@@ -77,12 +111,12 @@ const clearForm = () => {
                     </div>
                 </div>
             </div>
-            
+            <div v-if="fileSaved" class="alert alert-success mt-4">File has been saved locally!</div>
             <!-- Formulario de creación de documentos -->
             <div class="row mt-3" v-if="showCreateForm">
                 <div class="col">
                     <div class="d-flex justify-content-center">
-                        <form class="shadow p-3 mb-5 bg-body rounded formu" @submit.prevent="submitForm">
+                        <form class="shadow p-3 mb-5 bg-body rounded formu" @submit.prevent="saveFileLocally">
                             <h2 class="text-center mb-4">Crear Documento</h2>
                             <div class="mb-3">
                                 <label for="nombre" class="form-label">Nombre</label>
@@ -90,7 +124,7 @@ const clearForm = () => {
                             </div>
                             <div class="mb-3">
                                 <label for="archivo" class="form-label">Subir Archivo</label>
-                                <input type="file" class="form-control" id="archivo" @change="documento.archivo = $event.target.files[0]">
+                                <input type="file" class="form-control" id="archivo" @change="handleFileChange">
                             </div>
                             <div class="mb-3">
                                 <label for="descripcion" class="form-label">Descripción</label>
